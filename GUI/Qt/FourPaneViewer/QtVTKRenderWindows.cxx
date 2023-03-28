@@ -32,6 +32,9 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
+#include "vtkAutoInit.h"
+VTK_MODULE_INIT(vtkRenderingOpenGL2);
+VTK_MODULE_INIT(vtkInteractionStyle);
 
 //------------------------------------------------------------------------------
 class vtkResliceCursorCallback : public vtkCommand
@@ -122,6 +125,7 @@ QtVTKRenderWindows::QtVTKRenderWindows(int vtkNotUsed(argc), char* argv[])
   reader->Update();
   int imageDims[3];
   reader->GetOutput()->GetDimensions(imageDims);
+  std::cout << "image dims: " << imageDims[0] << ", " << imageDims[1] << ", " << imageDims[2] << std::endl;
 
   for (int i = 0; i < 3; i++)
   {
@@ -151,6 +155,7 @@ QtVTKRenderWindows::QtVTKRenderWindows(int vtkNotUsed(argc), char* argv[])
     riw[i]->SetInputData(reader->GetOutput());
     riw[i]->SetSliceOrientation(i);
     riw[i]->SetResliceModeToAxisAligned();
+    riw[i]->SetSlice(imageDims[i]/2);
   }
 
   vtkSmartPointer<vtkCellPicker> picker = vtkSmartPointer<vtkCellPicker>::New();
@@ -256,22 +261,63 @@ void QtVTKRenderWindows::resliceMode(int mode)
 
 void QtVTKRenderWindows::thickMode(int mode)
 {
+  std::cout << "thickMode: " << mode << std::endl;
   for (int i = 0; i < 3; i++)
   {
-    riw[i]->SetThickMode(mode ? 1 : 0);
+      riw[i]->SetThickMode(mode ? 1 : 0);
+      vtkImageSlabReslice* thickSlabReslice =
+        vtkImageSlabReslice::SafeDownCast(vtkResliceCursorThickLineRepresentation::SafeDownCast(
+          riw[i]->GetResliceCursorWidget()->GetRepresentation())
+                                            ->GetReslice());
+      double res = thickSlabReslice->GetSlabResolution();
+      double thick = thickSlabReslice->GetSlabThickness();
+      int numsample = thickSlabReslice->GetNumBlendSamplePoints();
+      int slabnum = thickSlabReslice->GetSlabNumberOfSlices();
+      std::cout << "*******************************\n";
+      std::cout << "resolution: " << res << std::endl;
+      std::cout << "thickness: " << thick << std::endl;
+      std::cout << "num sample: " << numsample << std::endl;
+      std::cout << "slabnum: " << slabnum << std::endl;
+      // thickSlabReslice->SetInterpolationModeToLinear();
+      // thickSlabReslice->SetSlabThickness(200);
+      // thickSlabReslice->SetSlabNumberOfSlices(2*(int)(0.5*300/res)+1);
+      // thickSlabReslice->SetBlendMode(mode);
+
     riw[i]->Render();
   }
 }
 
 void QtVTKRenderWindows::SetBlendMode(int m)
 {
+    std::cout << "SetBlendMode: " << m << std::endl;
   for (int i = 0; i < 3; i++)
   {
     vtkImageSlabReslice* thickSlabReslice =
       vtkImageSlabReslice::SafeDownCast(vtkResliceCursorThickLineRepresentation::SafeDownCast(
         riw[i]->GetResliceCursorWidget()->GetRepresentation())
                                           ->GetReslice());
+    double res = thickSlabReslice->GetSlabResolution();
+    double thick = thickSlabReslice->GetSlabThickness();
+    int numsample = thickSlabReslice->GetNumBlendSamplePoints();
+    int slabnum = thickSlabReslice->GetSlabNumberOfSlices();
+    std::cout << "resolution: " << res << std::endl;
+    std::cout << "thickness: " << thick << std::endl;
+    std::cout << "num sample: " << numsample << std::endl;
+    std::cout << "slabnum: " << slabnum << std::endl;
+//    thickSlabReslice->SetInterpolationModeToLinear();
+    // thickSlabReslice->SetSlabThickness(200);
+//    thickSlabReslice->SetSlabNumberOfSlices(2*(int)(0.5*300/res)+1);
     thickSlabReslice->SetBlendMode(m);
+
+//    thickSlabReslice->SetSlabNumberOfSlices(100);
+//    thickSlabReslice->SetSlabThickness(100);
+    // thickSlabReslice->Update();
+    // std::cout << "-------------------------------------\n";
+    // std::cout << "resolution: " << res << std::endl;
+    // std::cout << "thickness: " << thick << std::endl;
+    // std::cout << "num sample: " << numsample << std::endl;
+    // std::cout << "slabnum: " << slabnum << std::endl;
+
     riw[i]->Render();
   }
 }

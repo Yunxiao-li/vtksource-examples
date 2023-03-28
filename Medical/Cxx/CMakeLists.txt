@@ -6,6 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
+set(VTK_DIR /home/jackie/works/code/opensource/vtk/vtk9.2-install/debug/lib/cmake/vtk-9.2)
 find_package(VTK
   COMPONENTS
     CommonCore
@@ -36,11 +37,13 @@ add_executable(Medical1 MACOSX_BUNDLE Medical1.cxx)
 add_executable(Medical2 MACOSX_BUNDLE Medical2.cxx)
 add_executable(Medical3 MACOSX_BUNDLE Medical3.cxx)
 add_executable(Medical4 MACOSX_BUNDLE Medical4.cxx)
+add_executable(ImageDisplayExtent MACOSX_BUNDLE Medical4.cxx)
 
 target_link_libraries(Medical1 PRIVATE ${VTK_LIBRARIES})
 target_link_libraries(Medical2 PRIVATE ${VTK_LIBRARIES})
 target_link_libraries(Medical3 PRIVATE ${VTK_LIBRARIES})
 target_link_libraries(Medical4 PRIVATE ${VTK_LIBRARIES})
+target_link_libraries(ImageDisplayExtent PRIVATE ${VTK_LIBRARIES})
 
 add_executable(GenerateModelsFromLabels MACOSX_BUNDLE GenerateModelsFromLabels.cxx)
 add_executable(GenerateCubesFromLabels MACOSX_BUNDLE  GenerateCubesFromLabels.cxx)

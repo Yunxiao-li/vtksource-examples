@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8...3.12 FATAL_ERROR)
 project(QtVTKRenderWindows)
 
+set(VTK_DIR /home/jackie/works/code/opensource/vtk/vtk9.2-install/debug/lib/cmake/vtk-9.2)
 find_package(VTK
   COMPONENTS
     CommonCore
@@ -16,6 +17,7 @@ if (NOT VTK_FOUND)
   return ()
 endif ()
 
+set(QT_DIR /usr/local/qt/5.15.2/gcc_64/lib)
 find_package(Qt5 COMPONENTS Widgets)
 if (NOT TARGET Qt5::Widgets)
   message("Skipping example: ${Qt5_NOT_FOUND_MESSAGE}")

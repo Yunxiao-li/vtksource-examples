@@ -38,6 +38,70 @@
 #include "vtkRenderer.h"
 #include "vtkSmartPointer.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkDICOMImageReader.h"
+
+// Define own interaction style
+class myVtkInteractorStyleImage : public vtkInteractorStyleImage
+{
+public:
+  static myVtkInteractorStyleImage* New();
+  vtkTypeMacro(myVtkInteractorStyleImage, vtkInteractorStyleImage);
+
+protected:
+
+  virtual void OnKeyDown()
+  {
+    std::string key = this->GetInteractor()->GetKeySym();
+    if (key.compare("Up") == 0)
+    {
+      cout << "Up arrow key was pressed." << endl;
+      //MoveSliceForward();
+    }
+    else if (key.compare("Down") == 0)
+    {
+      cout << "Down arrow key was pressed." << endl;
+      //MoveSliceBackward();
+    }
+    // forward event
+    vtkInteractorStyleImage::OnKeyDown();
+  }
+  
+  void OnLeftButtonDown() override
+  {
+    std::cout << "myVtkInteractorStyleImage: OnLeftButtonDown \n";
+    // this->GrabFocus((vtkCommand*)(this->EventCallbackCommand));
+  }
+
+  void OnLeftButtonUp() override
+  {
+    std::cout << "myVtkInteractorStyleImage: OnLeftButtonUp \n";
+  }
+
+  void OnMouseMove() override
+  {
+    std::cout << "myVtkInteractorStyleImage: OnMouseMoveEvent \n";
+  }
+
+  virtual void OnMouseWheelForward()
+  {
+    std::cout << "Scrolled mouse wheel forward." << std::endl;
+
+    // don't forward events, otherwise the image will be zoomed
+    // in case another interactorstyle is used (e.g. trackballstyle, ...)
+    // vtkInteractorStyleImage::OnMouseWheelForward();
+  }
+
+  virtual void OnMouseWheelBackward()
+  {
+    std::cout << "Scrolled mouse wheel backward." << std::endl;
+
+    // don't forward events, otherwise the image will be zoomed
+    // in case another interactorstyle is used (e.g. trackballstyle, ...)
+    // vtkInteractorStyleImage::OnMouseWheelBackward();
+  }
+};
+
+vtkStandardNewMacro(myVtkInteractorStyleImage);
 
 // The mouse motion callback, to turn "Slicing" on and off
 class vtkImageInteractionCallback : public vtkCommand
@@ -62,6 +126,7 @@ public:
 
   void Execute(vtkObject*, unsigned long event, void*) override
   {
+    //std::cout << "enter vtk command execute \n";
     vtkRenderWindowInteractor* interactor = this->GetInteractor();
 
     int lastPos[2];
@@ -71,14 +136,18 @@ public:
 
     if (event == vtkCommand::LeftButtonPressEvent)
     {
+      std::cout << "passive oberser flag: " << GetPassiveObserver() << std::endl;
+      std::cout << "vtkCommand::LeftButtonPressEvent \n";
       this->Slicing = 1;
     }
     else if (event == vtkCommand::LeftButtonReleaseEvent)
     {
+      std::cout << "vtkCommand::LeftButtonReleaseEvent \n";
       this->Slicing = 0;
     }
     else if (event == vtkCommand::MouseMoveEvent)
     {
+      // std::cout << "vtkCommand::MouseMoveEvent \n";
       if (this->Slicing)
       {
         vtkImageReslice* reslice = this->ImageReslice;
@@ -112,6 +181,7 @@ public:
         }
       }
     }
+    //std::cout << "finish vtk command execute \n";
   }
 
 private:
@@ -128,21 +198,29 @@ private:
 // The program entry point
 int main(int argc, char* argv[])
 {
+  vtkNew<vtkDICOMImageReader> reader;
+  
+	
   if (argc < 2)
   {
-    cout << "Usage: " << argv[0] << " DATADIR/headsq/quarter" << endl;
-    return 1;
+    reader->SetDirectoryName("/home/jackie/works/data/dicom/image_04");
   }
-
+  else 
+  {
+    reader->SetDirectoryName(argv[1]);
+  }
+  reader->Update();
   // Start by loading some data.
-  vtkSmartPointer<vtkImageReader2> reader = vtkSmartPointer<vtkImageReader2>::New();
-  reader->SetFilePrefix(argv[1]);
-  reader->SetDataExtent(0, 63, 0, 63, 1, 93);
-  reader->SetDataSpacing(3.2, 3.2, 1.5);
-  reader->SetDataOrigin(0.0, 0.0, 0.0);
-  reader->SetDataScalarTypeToUnsignedShort();
-  reader->SetDataByteOrderToLittleEndian();
-  reader->UpdateWholeExtent();
+  // vtkSmartPointer<vtkImageReader2> reader = vtkSmartPointer<vtkImageReader2>::New();
+  // reader->SetFilePrefix(argv[1]);
+  // reader->SetDataExtent(0, 63, 0, 63, 1, 93);
+  // reader->SetDataSpacing(3.2, 3.2, 1.5);
+  // reader->SetDataOrigin(0.0, 0.0, 0.0);
+  // reader->SetDataScalarTypeToUnsignedShort();
+  // reader->SetDataByteOrderToLittleEndian();
+  // reader->UpdateWholeExtent();
+
+  
 
   // Calculate the center of the volume
   reader->Update();
@@ -202,7 +280,7 @@ int main(int argc, char* argv[])
 
   // Create a greyscale lookup table
   vtkSmartPointer<vtkLookupTable> table = vtkSmartPointer<vtkLookupTable>::New();
-  table->SetRange(0, 2000);            // image intensity range
+  table->SetRange(0, 3000);            // image intensity range
   table->SetValueRange(0.0, 1.0);      // from black to white
   table->SetSaturationRange(0.0, 0.0); // no color saturation
   table->SetRampToLinear();
@@ -225,7 +303,7 @@ int main(int argc, char* argv[])
 
   // Set up the interaction
   vtkSmartPointer<vtkInteractorStyleImage> imageStyle =
-    vtkSmartPointer<vtkInteractorStyleImage>::New();
+    vtkSmartPointer<myVtkInteractorStyleImage>::New();
   vtkSmartPointer<vtkRenderWindowInteractor> interactor =
     vtkSmartPointer<vtkRenderWindowInteractor>::New();
   interactor->SetInteractorStyle(imageStyle);
